@@ -1,5 +1,9 @@
 package tourGuide.helper;
 
+/**
+ * Class to help testing in TourGuide application
+ * 
+ */
 public class InternalTestHelper {
 
 	// Set this default up to 100,000 for testing

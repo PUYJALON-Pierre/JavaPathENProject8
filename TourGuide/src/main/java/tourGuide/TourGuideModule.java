@@ -7,6 +7,10 @@ import gpsUtil.GpsUtil;
 import rewardCentral.RewardCentral;
 import tourGuide.service.RewardsService;
 
+/**
+ * Configuration class of TourGuide application
+ *
+ */
 @Configuration
 public class TourGuideModule {
 	

@@ -8,6 +8,11 @@ import java.util.UUID;
 import gpsUtil.location.VisitedLocation;
 import tripPricer.Provider;
 
+
+/**
+ * Object class for User in TourGuide Application
+ * 
+ */
 public class User {
 	private final UUID userId;
 	private final String userName;

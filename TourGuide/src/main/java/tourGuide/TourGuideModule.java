@@ -20,11 +20,6 @@ public class TourGuideModule {
 	}
 	
 	@Bean
-	public RewardsService getRewardsService() {
-		return new RewardsService(getGpsUtil(), getRewardCentral());
-	}
-	
-	@Bean
 	public RewardCentral getRewardCentral() {
 		return new RewardCentral();
 	}

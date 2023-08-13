@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -37,20 +39,24 @@ import tripPricer.TripPricer;
 @Service
 public class TourGuideService {
 	private Logger logger = LoggerFactory.getLogger(TourGuideService.class);
-	private final GpsUtil gpsUtil;
+	private final GpsUtilService gpsUtilService;
 	private final RewardsService rewardsService;
 	private final TripPricer tripPricer = new TripPricer();
 	public final Tracker tracker;
 	boolean testMode = true;
 
+	//ajout executor ici aussi?
+	private ExecutorService executor = Executors.newFixedThreadPool(1200);
+	
+	
 	/**
 	 * Constructor for instancing a TourGuideService
 	 * 
-	 * @param gpsUtil        - GpsUtil
+	 * @param gpsUtilService        - GpsUtilService
 	 * @param rewardsService - RewardsService
 	 */
-	public TourGuideService(GpsUtil gpsUtil, RewardsService rewardsService) {
-		this.gpsUtil = gpsUtil;
+	public TourGuideService(GpsUtilService gpsUtilService, RewardsService rewardsService) {
+		this.gpsUtilService = gpsUtilService;
 		this.rewardsService = rewardsService;
 
 		if (testMode) {
@@ -132,23 +138,37 @@ public class TourGuideService {
 	}
 
 	/**
-	 * Get current user location
+	 * Track current user location
 	 * 
 	 * @param user - User
 	 * @return VisitedLocation
 	 */
 	public VisitedLocation trackUserLocation(User user) {
-		VisitedLocation visitedLocation = gpsUtil.getUserLocation(user.getUserId());
+		
+		    executor.submit(()->{
+			gpsUtilService.submitLocation(user, this);
+		});
+			return getUserLocation(user);//pas sur????
+	}
+	
+	/**
+	 * Set final location of user
+	 * 
+	 * @param user
+	 * @param visitedLocation
+	 */
+	public void finalizeLocation(User user, VisitedLocation visitedLocation) {
 		user.addToVisitedLocations(visitedLocation);
 		rewardsService.calculateRewards(user);
-		return visitedLocation;
+		//tracker.stopTracking(); //Stop tracking ou update???
 	}
+	
 
 	public List<NearbyAttractionsDTO> getNearByAttractions(VisitedLocation visitedLocation) {
 		List<NearbyAttractionsDTO> nearbyAttractionsDTOList = new ArrayList<>();
 
 		// Retrieve list of Attractions sorted by distanced from user
-		List<Attraction> attractions = gpsUtil.getAttractions().stream()
+		List<Attraction> attractions = gpsUtilService.getAttractions().stream()
 				.sorted(Comparator.comparingDouble(a -> rewardsService.getDistance(visitedLocation.location, a)))
 				.limit(5).collect(Collectors.toList());
 
@@ -163,7 +183,7 @@ public class TourGuideService {
 			nearbyAttractionDTO.setUserLocation(visitedLocation.location);
 			nearbyAttractionDTO.setDistanceBetweenUserLocationAndAttractionInMiles(
 					rewardsService.getDistance(visitedLocation.location, attraction));
-			
+
 			RewardCentral rewardCentral = new RewardCentral();
 			nearbyAttractionDTO.setRewardPoints(
 					rewardCentral.getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId));
@@ -171,8 +191,18 @@ public class TourGuideService {
 			// Add DTO to list
 			nearbyAttractionsDTOList.add(nearbyAttractionDTO);
 		}
-		
+
 		return nearbyAttractionsDTOList;
+	}
+
+	public Map<UUID, VisitedLocation> getAllCurrentLocations() {
+
+		Map<UUID, VisitedLocation> lastVisitedLocations = new HashMap<UUID, VisitedLocation>();
+		List<User> userList = getAllUsers();
+		for (User user : userList) {
+			lastVisitedLocations.put(user.getUserId(), getUserLocation(user));
+		}
+		return lastVisitedLocations;
 	}
 
 	private void addShutDownHook() {

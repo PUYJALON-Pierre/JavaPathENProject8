@@ -2,6 +2,8 @@ package tourGuide.service;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -63,24 +65,24 @@ public class RewardsService {
 	 * Calculate rewards for a specific user from attractions he has visited
 	 * 
 	 * @param user - User
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
 	 */
-	public void calculateRewards(User user) {
-		List<VisitedLocation> userLocations = user.getVisitedLocations();
+	public void calculateRewards(User user) throws InterruptedException, ExecutionException {
+		CopyOnWriteArrayList<VisitedLocation> userLocations = new CopyOnWriteArrayList<>(user.getVisitedLocations());
 		List<Attraction> attractions = gpsUtilService.getAttractions();
 
-		CompletableFuture.runAsync(() -> {
-			for (VisitedLocation visitedLocation : userLocations) {
-				for (Attraction attraction : attractions) {
-					if (user.getUserRewards().stream()
-							.filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
-						if (nearAttraction(visitedLocation, attraction)) {
-							user.addUserReward(
-									new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
-						}
+		for (VisitedLocation visitedLocation : userLocations) {
+			for (Attraction attraction : attractions) {
+				if (user.getUserRewards().stream()
+						.filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
+					if (nearAttraction(visitedLocation, attraction)) {
+						user.addUserReward(
+								new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
 					}
 				}
 			}
-		}, executor);
+		}
 	}
 
 	/**
@@ -111,10 +113,18 @@ public class RewardsService {
 	 * @param attraction - Attraction
 	 * @param user       - User
 	 * @return rewardPoints - int
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
 	 */
-	private int getRewardPoints(Attraction attraction, User user) {
-		return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
+	private int getRewardPoints(Attraction attraction, User user) throws InterruptedException, ExecutionException {
+
+		CompletableFuture<Integer> completableFuture = CompletableFuture.supplyAsync(() -> {
+			return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
+		}, executor);
+		return completableFuture.get();
 	}
+
+	
 
 	/**
 	 * Get distance between two location

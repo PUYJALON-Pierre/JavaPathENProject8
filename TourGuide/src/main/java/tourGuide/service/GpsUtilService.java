@@ -2,6 +2,7 @@ package tourGuide.service;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -17,8 +18,8 @@ public class GpsUtilService {
 
 	private GpsUtil gpsUtil;
 
-	public GpsUtilService(GpsUtil gpsUtil) {
-		this.gpsUtil = gpsUtil;
+	public GpsUtilService() {
+		this.gpsUtil = new GpsUtil();
 	}
 
 	private ExecutorService executor = Executors.newFixedThreadPool(1200);
@@ -32,7 +33,12 @@ public class GpsUtilService {
 		CompletableFuture.supplyAsync(() -> {
 			return gpsUtil.getUserLocation(user.getUserId());
 		}, executor).thenAccept(visitedLocation -> {
-			tourGuideService.finalizeLocation(user, visitedLocation);
+			try {
+				tourGuideService.finalizeLocation(user, visitedLocation);
+			} catch (InterruptedException | ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		});
 	}
 

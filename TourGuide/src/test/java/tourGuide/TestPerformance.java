@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.StopWatch;
@@ -58,8 +59,8 @@ public class TestPerformance {
 
 	@Test
 	public void highVolumeTrackLocation() {
-		GpsUtil gpsUtil = new GpsUtil();
-		GpsUtilService gpsUtilService = new GpsUtilService(gpsUtil);
+	
+		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		// Users should be incremented up to 100,000, and test finishes within 15
 		// minutes
@@ -86,12 +87,12 @@ public class TestPerformance {
 	@Test
 	public void highVolumeGetRewards() {
 		GpsUtil gpsUtil = new GpsUtil();
-		GpsUtilService gpsUtilService = new GpsUtilService(gpsUtil);
+		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 
 		// Users should be incremented up to 100,000, and test finishes within 20
 		// minutes
-		InternalTestHelper.setInternalUserNumber(10000);
+		InternalTestHelper.setInternalUserNumber(100000);
 		StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		TourGuideService tourGuideService = new TourGuideService(gpsUtilService, rewardsService);
@@ -101,7 +102,14 @@ public class TestPerformance {
 		allUsers = tourGuideService.getAllUsers();
 		allUsers.forEach(u -> u.addToVisitedLocations(new VisitedLocation(u.getUserId(), attraction, new Date())));
 
-		allUsers.forEach(u -> rewardsService.calculateRewards(u));
+		allUsers.forEach(u -> {
+			try {
+				rewardsService.calculateRewards(u);
+			} catch (InterruptedException | ExecutionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		});
 
 		for (User user : allUsers) {
 			assertTrue(user.getUserRewards().size() > 0);

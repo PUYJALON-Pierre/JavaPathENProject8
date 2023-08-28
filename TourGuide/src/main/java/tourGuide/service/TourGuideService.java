@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -156,8 +157,10 @@ public class TourGuideService {
 	 * 
 	 * @param user
 	 * @param visitedLocation
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
 	 */
-	public void finalizeLocation(User user, VisitedLocation visitedLocation) {
+	public void finalizeLocation(User user, VisitedLocation visitedLocation) throws InterruptedException, ExecutionException {
 		user.addToVisitedLocations(visitedLocation);
 		rewardsService.calculateRewards(user);
 		//tracker.stopTracking(); //Stop tracking ou update???

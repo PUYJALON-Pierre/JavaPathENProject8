@@ -6,9 +6,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.core.annotation.Order;
 
 import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
@@ -29,10 +31,11 @@ public class TestRewardsService {
 											// while using miles
 	}
 
+	@Order(0)
 	@Test
 	public void userGetRewards() {
 		GpsUtil gpsUtil = new GpsUtil();
-		GpsUtilService gpsUtilService = new GpsUtilService(gpsUtil);
+		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 
 		InternalTestHelper.setInternalUserNumber(0);
@@ -47,20 +50,22 @@ public class TestRewardsService {
 		assertTrue(userRewards.size() == 1);
 	}
 
+	@Order(1)
 	@Test
 	public void isWithinAttractionProximity() {
 		GpsUtil gpsUtil = new GpsUtil();
-		GpsUtilService gpsUtilService = new GpsUtilService(gpsUtil);
+		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		Attraction attraction = gpsUtil.getAttractions().get(0);
 		assertTrue(rewardsService.isWithinAttractionProximity(attraction, attraction));
 	}
 
 // Needs fixed - can throw ConcurrentModificationException
+	@Order(2)
 	@Test
-	public void nearAllAttractions() {
+	public void nearAllAttractions() throws InterruptedException, ExecutionException {
 		GpsUtil gpsUtil = new GpsUtil();
-		GpsUtilService gpsUtilService = new GpsUtilService(gpsUtil);
+		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		rewardsService.setProximityBuffer(Integer.MAX_VALUE);
 

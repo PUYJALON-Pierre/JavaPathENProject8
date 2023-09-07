@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
@@ -46,14 +45,12 @@ public class TourGuideService {
 	public final Tracker tracker;
 	boolean testMode = true;
 
-	//ajout executor ici aussi?
 	private ExecutorService executor = Executors.newFixedThreadPool(1200);
-	
-	
+
 	/**
 	 * Constructor for instancing a TourGuideService
 	 * 
-	 * @param gpsUtilService        - GpsUtilService
+	 * @param gpsUtilService - GpsUtilService
 	 * @param rewardsService - RewardsService
 	 */
 	public TourGuideService(GpsUtilService gpsUtilService, RewardsService rewardsService) {
@@ -145,27 +142,27 @@ public class TourGuideService {
 	 * @return VisitedLocation
 	 */
 	public VisitedLocation trackUserLocation(User user) {
-		
-		    executor.submit(()->{
+
+		executor.submit(() -> {
 			gpsUtilService.submitLocation(user, this);
 		});
-			return getUserLocation(user);//pas sur????
+		return getUserLocation(user);
 	}
-	
+
 	/**
 	 * Set final location of user
 	 * 
 	 * @param user
 	 * @param visitedLocation
-	 * @throws ExecutionException 
-	 * @throws InterruptedException 
+	 * @throws ExecutionException
+	 * @throws InterruptedException
 	 */
-	public void finalizeLocation(User user, VisitedLocation visitedLocation) throws InterruptedException, ExecutionException {
+	public void finalizeLocation(User user, VisitedLocation visitedLocation)
+			throws InterruptedException, ExecutionException {
 		user.addToVisitedLocations(visitedLocation);
 		rewardsService.calculateRewards(user);
-		//tracker.stopTracking(); //Stop tracking ou update???
+		// tracker.stopTracking(); //Stop tracking ou update???
 	}
-	
 
 	public List<NearbyAttractionsDTO> getNearByAttractions(VisitedLocation visitedLocation) {
 		List<NearbyAttractionsDTO> nearbyAttractionsDTOList = new ArrayList<>();
@@ -198,12 +195,12 @@ public class TourGuideService {
 		return nearbyAttractionsDTOList;
 	}
 
-	public Map<UUID, VisitedLocation> getAllCurrentLocations() {
+	public Map<String, Location> getAllCurrentLocations() {
 
-		Map<UUID, VisitedLocation> lastVisitedLocations = new HashMap<UUID, VisitedLocation>();
+		Map<String, Location> lastVisitedLocations = new HashMap<String, Location>();
 		List<User> userList = getAllUsers();
 		for (User user : userList) {
-			lastVisitedLocations.put(user.getUserId(), getUserLocation(user));
+			lastVisitedLocations.put(user.getUserId().toString(), getUserLocation(user).location);
 		}
 		return lastVisitedLocations;
 	}

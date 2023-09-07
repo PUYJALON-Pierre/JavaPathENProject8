@@ -2,6 +2,8 @@ package tourGuide;
 
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,6 +23,8 @@ import tripPricer.Provider;
  */
 @RestController
 public class TourGuideController {
+
+	final static Logger lOGGER = LogManager.getLogger(TourGuideController.class);
 
 	@Autowired
 	TourGuideService tourGuideService;
@@ -43,6 +47,7 @@ public class TourGuideController {
 	 */
 	@RequestMapping("/getLocation")
 	public String getLocation(@RequestParam String userName) {
+		lOGGER.debug("Getting location of username : {}", userName);
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
 		return JsonStream.serialize(visitedLocation.location);
 	}
@@ -56,6 +61,7 @@ public class TourGuideController {
 	 */
 	@RequestMapping("/getNearbyAttractions")
 	public String getNearbyAttractions(@RequestParam String userName) {
+		lOGGER.debug("Getting 5 nearest attractions for username : {}", userName);
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
 		return JsonStream.serialize(tourGuideService.getNearByAttractions(visitedLocation));
 	}
@@ -68,6 +74,7 @@ public class TourGuideController {
 	 */
 	@RequestMapping("/getRewards")
 	public String getRewards(@RequestParam String userName) {
+		lOGGER.debug("Getting rewards for username : {}", userName);
 		return JsonStream.serialize(tourGuideService.getUserRewards(getUser(userName)));
 	}
 
@@ -90,7 +97,7 @@ public class TourGuideController {
 		// {"longitude":-48.188821,"latitude":74.84371}
 		// ...
 		// }
-
+		lOGGER.debug("Getting all current locations");
 		return JsonStream.serialize(tourGuideService.getAllCurrentLocations());
 	}
 
@@ -102,6 +109,7 @@ public class TourGuideController {
 	 */
 	@RequestMapping("/getTripDeals")
 	public String getTripDeals(@RequestParam String userName) {
+		lOGGER.debug("Getting trip deals for username : {}", userName);
 		List<Provider> providers = tourGuideService.getTripDeals(getUser(userName));
 		return JsonStream.serialize(providers);
 	}
@@ -113,6 +121,7 @@ public class TourGuideController {
 	 * @return a specific user - User
 	 */
 	private User getUser(String userName) {
+		lOGGER.debug("Getting User with username : {}", userName);
 		return tourGuideService.getUser(userName);
 	}
 

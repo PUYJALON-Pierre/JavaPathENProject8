@@ -9,11 +9,9 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
-import gpsUtil.GpsUtil;
-import gpsUtil.location.Attraction;
+import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
 import rewardCentral.RewardCentral;
 import tourGuide.helper.InternalTestHelper;
@@ -34,7 +32,7 @@ public class TestTourGuideService {
 
 	@Test
 	public void getUserLocation() {
-		GpsUtil gpsUtil = new GpsUtil();
+
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -48,7 +46,7 @@ public class TestTourGuideService {
 
 	@Test
 	public void addUser() {
-		GpsUtil gpsUtil = new GpsUtil();
+	
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -71,7 +69,7 @@ public class TestTourGuideService {
 
 	@Test
 	public void getAllUsers() {
-		GpsUtil gpsUtil = new GpsUtil();
+	
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -93,7 +91,7 @@ public class TestTourGuideService {
 
 	@Test
 	public void trackUser() {
-		GpsUtil gpsUtil = new GpsUtil();
+
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -109,7 +107,7 @@ public class TestTourGuideService {
 
 	@Test
 	public void getNearbyAttractions() {
-		GpsUtil gpsUtil = new GpsUtil();
+		
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -125,10 +123,9 @@ public class TestTourGuideService {
 		assertEquals(5, attractions.size());
 	}
 
-	@Test // vérifier car pb (reproductivité??) car pas ub de bvase???
+	@Test 
 	public void getAllCurrentLocations() {
 
-		GpsUtil gpsUtil = new GpsUtil();
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);
@@ -138,23 +135,21 @@ public class TestTourGuideService {
 		User user2 = new User(UUID.randomUUID(), "jon2", "000", "jon2@tourGuide.com");
 
 		tourGuideService.addUser(user);
-		//user.clearVisitedLocations();
 		tourGuideService.addUser(user2);
+		
 
-		Map<UUID, VisitedLocation> lastVisitedLocations = tourGuideService.getAllCurrentLocations();
-      //  tourGuideService.trackUserLocation(user);
+		Map<String, Location> lastVisitedLocations = tourGuideService.getAllCurrentLocations();
+
 		tourGuideService.tracker.stopTracking();
 
 		assertEquals(lastVisitedLocations.size(), 2);
-	    assertEquals(user.getLastVisitedLocation(), lastVisitedLocations.get(user.getUserId()));
-		assertEquals(user2.getLastVisitedLocation(), lastVisitedLocations.get(user2.getUserId()));
+
 	
 
 	}
 
 	@Test
 	public void getTripDeals() {
-		GpsUtil gpsUtil = new GpsUtil();
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);

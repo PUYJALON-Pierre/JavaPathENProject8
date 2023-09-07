@@ -31,7 +31,6 @@ public class RewardsService {
 	private final GpsUtilService gpsUtilService;
 	private final RewardCentral rewardsCentral;
 
-	// ajout executor ici aussi?
 	private ExecutorService executor = Executors.newFixedThreadPool(1200);
 
 	/**
@@ -65,8 +64,8 @@ public class RewardsService {
 	 * Calculate rewards for a specific user from attractions he has visited
 	 * 
 	 * @param user - User
-	 * @throws ExecutionException 
-	 * @throws InterruptedException 
+	 * @throws ExecutionException
+	 * @throws InterruptedException
 	 */
 	public void calculateRewards(User user) throws InterruptedException, ExecutionException {
 		CopyOnWriteArrayList<VisitedLocation> userLocations = new CopyOnWriteArrayList<>(user.getVisitedLocations());
@@ -113,8 +112,8 @@ public class RewardsService {
 	 * @param attraction - Attraction
 	 * @param user       - User
 	 * @return rewardPoints - int
-	 * @throws ExecutionException 
-	 * @throws InterruptedException 
+	 * @throws ExecutionException
+	 * @throws InterruptedException
 	 */
 	private int getRewardPoints(Attraction attraction, User user) throws InterruptedException, ExecutionException {
 
@@ -123,8 +122,6 @@ public class RewardsService {
 		}, executor);
 		return completableFuture.get();
 	}
-
-	
 
 	/**
 	 * Get distance between two location

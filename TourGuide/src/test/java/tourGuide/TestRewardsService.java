@@ -10,7 +10,6 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.core.annotation.Order;
 
 import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
@@ -41,9 +40,9 @@ public class TestRewardsService {
 		TourGuideService tourGuideService = new TourGuideService(gpsUtilService, rewardsService);
 
 		User user = new User(UUID.randomUUID(), "jon", "000", "jon@tourGuide.com");
-		Attraction attraction = gpsUtilService.getAttractions().get(0);
+		Attraction attraction = gpsUtilService.getListOfAttractions().get(0);
 		user.addToVisitedLocations(new VisitedLocation(user.getUserId(), attraction, new Date()));
-		tourGuideService.trackUserLocation(user);
+		tourGuideService.trackUserLocation(user).join();
 		List<UserReward> userRewards = user.getUserRewards();
 		tourGuideService.tracker.stopTracking();
 		rewardsService.calculateRewards(user);
@@ -61,22 +60,22 @@ public class TestRewardsService {
 		assertTrue(rewardsService.isWithinAttractionProximity(attraction, attraction));
 	}
 
-// Needs fixed - can throw ConcurrentModificationException
 	@Test
 	public void nearAllAttractions() throws InterruptedException, ExecutionException {
-		GpsUtil gpsUtil = new GpsUtil();
+	
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		rewardsService.setProximityBuffer(Integer.MAX_VALUE);
 
 		InternalTestHelper.setInternalUserNumber(1);
 		TourGuideService tourGuideService = new TourGuideService(gpsUtilService, rewardsService);
-
-		rewardsService.calculateRewards(tourGuideService.getAllUsers().get(0));
+		
+		rewardsService.calculateRewards(tourGuideService.getAllUsers().get(0)).join();
 		List<UserReward> userRewards = tourGuideService.getUserRewards(tourGuideService.getAllUsers().get(0));
+
 		tourGuideService.tracker.stopTracking();
 
-		assertEquals(gpsUtil.getAttractions().size(), userRewards.size());
+		assertEquals(gpsUtilService.getListOfAttractions().size(), userRewards.size());
 	}
 
 }

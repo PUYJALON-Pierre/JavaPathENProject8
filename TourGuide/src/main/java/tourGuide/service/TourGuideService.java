@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
-import rewardCentral.RewardCentral;
 import tourGuide.helper.InternalTestHelper;
 import tourGuide.model.NearbyAttractionsDTO;
 import tourGuide.tracker.Tracker;
@@ -45,7 +44,7 @@ public class TourGuideService {
 	public final Tracker tracker;
 	boolean testMode = true;
 
-	private ExecutorService executor = Executors.newFixedThreadPool(1200);
+	private ExecutorService executorService = Executors.newFixedThreadPool(1200);
 
 	/**
 	 * Constructor for instancing a TourGuideService
@@ -85,7 +84,7 @@ public class TourGuideService {
 	 */
 	public VisitedLocation getUserLocation(User user) {
 		VisitedLocation visitedLocation = (user.getVisitedLocations().size() > 0) ? user.getLastVisitedLocation()
-				: trackUserLocation(user);
+				: trackUserLocation(user).join();
 		return visitedLocation;
 	}
 
@@ -139,36 +138,33 @@ public class TourGuideService {
 	 * Track current user location
 	 * 
 	 * @param user - User
-	 * @return VisitedLocation
+	 * @return CompletableFuture<VisitedLocation>
 	 */
-	public VisitedLocation trackUserLocation(User user) {
-
-		executor.submit(() -> {
-			gpsUtilService.submitLocation(user, this);
-		});
-		return getUserLocation(user);
+	public CompletableFuture<VisitedLocation> trackUserLocation(User user) {
+		CompletableFuture<VisitedLocation> visitedLocationCompletableFuture = CompletableFuture.supplyAsync(() -> {
+			VisitedLocation visitedLocation = gpsUtilService.getUserLocation(user.getUserId());
+			return visitedLocation;
+		}, executorService).thenApplyAsync((visitedLocation) -> {//async : new thread forked
+			user.addToVisitedLocations(visitedLocation);
+			rewardsService.calculateRewards(user).join();
+			//wait calculateReward is over before returning loc.
+			return visitedLocation;
+		}, rewardsService.getExecutor());
+		return visitedLocationCompletableFuture;
 	}
 
-	/**
-	 * Set final location of user
-	 * 
-	 * @param user
-	 * @param visitedLocation
-	 * @throws ExecutionException
-	 * @throws InterruptedException
-	 */
-	public void finalizeLocation(User user, VisitedLocation visitedLocation)
-			throws InterruptedException, ExecutionException {
-		user.addToVisitedLocations(visitedLocation);
-		rewardsService.calculateRewards(user);
-		// tracker.stopTracking(); //Stop tracking ou update???
-	}
-
+	
+/**
+ * Get 5 nearest attractions from a VisitedLocation
+ * 
+ * @param visitedLocation - VisitedLocation
+ * @return nearbyAttractionsDTOList - List<NearbyAttractionsDTO>
+ */
 	public List<NearbyAttractionsDTO> getNearByAttractions(VisitedLocation visitedLocation) {
 		List<NearbyAttractionsDTO> nearbyAttractionsDTOList = new ArrayList<>();
 
-		// Retrieve list of Attractions sorted by distanced from user
-		List<Attraction> attractions = gpsUtilService.getAttractions().stream()
+		// Retrieve list of Attractions sorted by distance from user
+		List<Attraction> attractions = gpsUtilService.getListOfAttractions().stream()
 				.sorted(Comparator.comparingDouble(a -> rewardsService.getDistance(visitedLocation.location, a)))
 				.limit(5).collect(Collectors.toList());
 
@@ -179,14 +175,14 @@ public class TourGuideService {
 
 			// Set DTO attributes
 			nearbyAttractionDTO.setAttractionName(attraction.attractionName);
-			nearbyAttractionDTO.setAttractionLocation(attraction);
+			Location attractionLocation = new Location(attraction.latitude, attraction.longitude);
+			nearbyAttractionDTO.setAttractionLocation(attractionLocation);
 			nearbyAttractionDTO.setUserLocation(visitedLocation.location);
 			nearbyAttractionDTO.setDistanceBetweenUserLocationAndAttractionInMiles(
 					rewardsService.getDistance(visitedLocation.location, attraction));
 
-			RewardCentral rewardCentral = new RewardCentral();
 			nearbyAttractionDTO.setRewardPoints(
-					rewardCentral.getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId));
+					rewardsService.getRewardsCentral().getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId));
 
 			// Add DTO to list
 			nearbyAttractionsDTOList.add(nearbyAttractionDTO);
@@ -195,6 +191,11 @@ public class TourGuideService {
 		return nearbyAttractionsDTOList;
 	}
 
+	/**
+	 * Get current locations of all users
+	 * 
+	 * @return lastVisitedLocations - Map<String, Location>
+	 */
 	public Map<String, Location> getAllCurrentLocations() {
 
 		Map<String, Location> lastVisitedLocations = new HashMap<String, Location>();

@@ -1,9 +1,11 @@
 package tourGuide.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -31,7 +33,11 @@ public class RewardsService {
 	private final GpsUtilService gpsUtilService;
 	private final RewardCentral rewardsCentral;
 
-	private ExecutorService executor = Executors.newFixedThreadPool(1200);
+	private ExecutorService executorService = Executors.newFixedThreadPool(1200);
+	
+	public Executor getExecutor(){
+		return this.executorService;
+	}
 
 	/**
 	 * Constructor for instancing a reward service
@@ -44,6 +50,10 @@ public class RewardsService {
 		this.rewardsCentral = rewardCentral;
 	}
 
+	public RewardCentral getRewardsCentral(){
+		return rewardsCentral;
+	}
+	
 	/**
 	 * Set a proximityBuffer (distance between a location and an attraction)
 	 * 
@@ -67,22 +77,36 @@ public class RewardsService {
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	public void calculateRewards(User user) throws InterruptedException, ExecutionException {
+	public CompletableFuture<Void> calculateRewards(User user) {
+		
 		CopyOnWriteArrayList<VisitedLocation> userLocations = new CopyOnWriteArrayList<>(user.getVisitedLocations());
-		List<Attraction> attractions = gpsUtilService.getAttractions();
+		
+		List<Attraction> attractions = gpsUtilService.getListOfAttractions();
 
-		for (VisitedLocation visitedLocation : userLocations) {
-			for (Attraction attraction : attractions) {
-				if (user.getUserRewards().stream()
-						.filter(r -> r.attraction.attractionName.equals(attraction.attractionName)).count() == 0) {
-					if (nearAttraction(visitedLocation, attraction)) {
-						user.addUserReward(
-								new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
-					}
+
+
+		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		
+		for (Attraction attraction : attractions) {
+
+			for (VisitedLocation visitedLocation : userLocations) {
+
+				if (nearAttraction(visitedLocation, attraction)) {
+					//future captures the result of asynchronous task
+					CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+						user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
+					}, executorService);
+					//The task execution will be handled by the executorService, which is an ExecutorService instance passed as an argument.
+					futures.add(future);
+					break;
 				}
 			}
 		}
+		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+		
+
 	}
+	
 
 	/**
 	 * Verify if an attraction is in the range of a user location by returning true
@@ -115,12 +139,9 @@ public class RewardsService {
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
-	private int getRewardPoints(Attraction attraction, User user) throws InterruptedException, ExecutionException {
+	private int getRewardPoints(Attraction attraction, User user) {
 
-		CompletableFuture<Integer> completableFuture = CompletableFuture.supplyAsync(() -> {
-			return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
-		}, executor);
-		return completableFuture.get();
+		return rewardsCentral.getAttractionRewardPoints(attraction.attractionId, user.getUserId());
 	}
 
 	/**

@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,7 +35,7 @@ public class TourGuideController {
 	 * 
 	 * @return Welcome message - String
 	 */
-	@RequestMapping("/")
+	@GetMapping("/")
 	public String index() {
 		return "Greetings from TourGuide!";
 	}
@@ -45,7 +46,7 @@ public class TourGuideController {
 	 * @param userName - String
 	 * @return Json object with location of a specific user
 	 */
-	@RequestMapping("/getLocation")
+	@GetMapping("/getLocation")
 	public String getLocation(@RequestParam String userName) {
 		lOGGER.debug("Getting location of username : {}", userName);
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
@@ -59,7 +60,7 @@ public class TourGuideController {
 	 * @return Json object that contain informations of the five nearest attractions
 	 *         - List of NearByAttractionsDTO
 	 */
-	@RequestMapping("/getNearbyAttractions")
+	@GetMapping("/getNearbyAttractions")
 	public String getNearbyAttractions(@RequestParam String userName) {
 		lOGGER.debug("Getting 5 nearest attractions for username : {}", userName);
 		VisitedLocation visitedLocation = tourGuideService.getUserLocation(getUser(userName));
@@ -72,7 +73,7 @@ public class TourGuideController {
 	 * @param userName - String
 	 * @return Json object that contains rewards of a specific user
 	 */
-	@RequestMapping("/getRewards")
+	@GetMapping("/getRewards")
 	public String getRewards(@RequestParam String userName) {
 		lOGGER.debug("Getting rewards for username : {}", userName);
 		return JsonStream.serialize(tourGuideService.getUserRewards(getUser(userName)));
@@ -83,7 +84,7 @@ public class TourGuideController {
 	 * 
 	 * @return Json object that contains all users current locations
 	 */
-	@RequestMapping("/getAllCurrentLocations")
+	@GetMapping("/getAllCurrentLocations")
 	public String getAllCurrentLocations() {
 		// TODO: Get a list of every user's most recent location as JSON
 		// - Note: does not use gpsUtil to query for their current location,
@@ -107,7 +108,7 @@ public class TourGuideController {
 	 * @param userName - String
 	 * @return Json object that contains tripDeals for a specific user
 	 */
-	@RequestMapping("/getTripDeals")
+	@GetMapping("/getTripDeals")
 	public String getTripDeals(@RequestParam String userName) {
 		lOGGER.debug("Getting trip deals for username : {}", userName);
 		List<Provider> providers = tourGuideService.getTripDeals(getUser(userName));

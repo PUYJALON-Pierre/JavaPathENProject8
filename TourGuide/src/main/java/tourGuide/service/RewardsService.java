@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -74,8 +75,7 @@ public class RewardsService {
 	 * Calculate rewards for a specific user from attractions he has visited
 	 * 
 	 * @param user - User
-	 * @throws ExecutionException
-	 * @throws InterruptedException
+	 * @return CompletableFuture<Void>
 	 */
 	public CompletableFuture<Void> calculateRewards(User user) {
 		
@@ -107,6 +107,19 @@ public class RewardsService {
 
 	}
 	
+	/**
+	 * Calculate rewards for a list of user from attractions they have visited
+	 * 
+	 * @param users - List of User
+	 * @return CompletableFuture<Void>
+	 */
+	public CompletableFuture<Void> calculateAllRewards(List<User> users) {
+		List<CompletableFuture<Void>> completableFutures = users.stream()
+				.map(user -> this.calculateRewards(user))
+				.collect(Collectors.toList());
+
+		return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]));
+	}
 
 	/**
 	 * Verify if an attraction is in the range of a user location by returning true
@@ -136,8 +149,6 @@ public class RewardsService {
 	 * @param attraction - Attraction
 	 * @param user       - User
 	 * @return rewardPoints - int
-	 * @throws ExecutionException
-	 * @throws InterruptedException
 	 */
 	private int getRewardPoints(Attraction attraction, User user) {
 

@@ -138,7 +138,7 @@ public class TourGuideService {
 	 * Track current user location
 	 * 
 	 * @param user - User
-	 * @return CompletableFuture<VisitedLocation>
+	 * @return CompletableFuture VisitedLocation
 	 */
 	public CompletableFuture<VisitedLocation> trackUserLocation(User user) {
 		CompletableFuture<VisitedLocation> visitedLocationCompletableFuture = CompletableFuture.supplyAsync(() -> {
@@ -153,6 +153,18 @@ public class TourGuideService {
 		return visitedLocationCompletableFuture;
 	}
 
+	/**
+	 * Track current location of users from a list
+	 * 
+	 * @param users - List of User
+	 * @return CompletableFuture void
+	 */
+	public CompletableFuture<Void> trackAllUserLocation(List<User> users) {
+		List<CompletableFuture<VisitedLocation>> completableFutures = users.stream()
+				.map(user -> this.trackUserLocation(user)).collect(Collectors.toList());
+		return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]));
+
+	}
 	
 /**
  * Get 5 nearest attractions from a VisitedLocation

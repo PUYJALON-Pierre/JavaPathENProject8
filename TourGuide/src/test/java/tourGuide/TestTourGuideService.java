@@ -125,7 +125,7 @@ public class TestTourGuideService {
 
 	@Test 
 	public void getAllCurrentLocations() {
-
+		
 		GpsUtilService gpsUtilService = new GpsUtilService();
 		RewardsService rewardsService = new RewardsService(gpsUtilService, new RewardCentral());
 		InternalTestHelper.setInternalUserNumber(0);

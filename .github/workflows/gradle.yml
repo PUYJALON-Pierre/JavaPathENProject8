@@ -33,4 +33,6 @@ jobs:
       with:
         gradle-version: 4.8.1
         arguments: build
-    - run: gradle --build-cache assemble
+    - run: |- 
+           cd TourGuide
+           gradle --build-cache assemble

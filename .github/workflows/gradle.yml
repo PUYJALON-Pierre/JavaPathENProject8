@@ -59,3 +59,20 @@ jobs:
            cd TourGuide
            gradle --build-cache assemble
            gradle check
+
+  deploy-artefact:
+    
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.3
+      with:
+    # Artifact name
+         name: tourGuideArtefacts
+    # A file, directory or wildcard pattern that describes what to upload
+         path: |
+              build/libs/tourGuide-*.jar
+              build/reports
+              build/jacocoHtml
+    

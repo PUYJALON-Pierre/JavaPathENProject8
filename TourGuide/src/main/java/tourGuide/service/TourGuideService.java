@@ -77,7 +77,7 @@ public class TourGuideService {
 	}
 
 	/**
-	 * Get last visited location with informations of a specific user
+	 * Get last visited location of a specific user from his informations
 	 * 
 	 * @param user - User
 	 * @return last visited location with informations - VisitedLocation
@@ -144,10 +144,10 @@ public class TourGuideService {
 		CompletableFuture<VisitedLocation> visitedLocationCompletableFuture = CompletableFuture.supplyAsync(() -> {
 			VisitedLocation visitedLocation = gpsUtilService.getUserLocation(user.getUserId());
 			return visitedLocation;
-		}, executorService).thenApplyAsync((visitedLocation) -> {//async : new thread forked
+		}, executorService).thenApplyAsync((visitedLocation) -> {// async : new thread forked
 			user.addToVisitedLocations(visitedLocation);
 			rewardsService.calculateRewards(user).join();
-			//wait calculateReward is over before returning loc.
+			// wait calculateReward is over before returning loc.
 			return visitedLocation;
 		}, rewardsService.getExecutor());
 		return visitedLocationCompletableFuture;
@@ -165,13 +165,13 @@ public class TourGuideService {
 		return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]));
 
 	}
-	
-/**
- * Get 5 nearest attractions from a VisitedLocation
- * 
- * @param visitedLocation - VisitedLocation
- * @return nearbyAttractionsDTOList - List<NearbyAttractionsDTO>
- */
+
+	/**
+	 * Get 5 nearest attractions from a VisitedLocation
+	 * 
+	 * @param visitedLocation - VisitedLocation
+	 * @return nearbyAttractionsDTOList - List<NearbyAttractionsDTO>
+	 */
 	public List<NearbyAttractionsDTO> getNearByAttractions(VisitedLocation visitedLocation) {
 		List<NearbyAttractionsDTO> nearbyAttractionsDTOList = new ArrayList<>();
 
@@ -193,8 +193,8 @@ public class TourGuideService {
 			nearbyAttractionDTO.setDistanceBetweenUserLocationAndAttractionInMiles(
 					rewardsService.getDistance(visitedLocation.location, attraction));
 
-			nearbyAttractionDTO.setRewardPoints(
-					rewardsService.getRewardsCentral().getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId));
+			nearbyAttractionDTO.setRewardPoints(rewardsService.getRewardsCentral()
+					.getAttractionRewardPoints(attraction.attractionId, visitedLocation.userId));
 
 			// Add DTO to list
 			nearbyAttractionsDTOList.add(nearbyAttractionDTO);

@@ -35,8 +35,8 @@ public class RewardsService {
 	private final RewardCentral rewardsCentral;
 
 	private ExecutorService executorService = Executors.newFixedThreadPool(1200);
-	
-	public Executor getExecutor(){
+
+	public Executor getExecutor() {
 		return this.executorService;
 	}
 
@@ -51,10 +51,10 @@ public class RewardsService {
 		this.rewardsCentral = rewardCentral;
 	}
 
-	public RewardCentral getRewardsCentral(){
+	public RewardCentral getRewardsCentral() {
 		return rewardsCentral;
 	}
-	
+
 	/**
 	 * Set a proximityBuffer (distance between a location and an attraction)
 	 * 
@@ -78,35 +78,34 @@ public class RewardsService {
 	 * @return CompletableFuture<Void>
 	 */
 	public CompletableFuture<Void> calculateRewards(User user) {
-		
+
 		CopyOnWriteArrayList<VisitedLocation> userLocations = new CopyOnWriteArrayList<>(user.getVisitedLocations());
-		
+
 		List<Attraction> attractions = gpsUtilService.getListOfAttractions();
 
-
-
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
-		
+
 		for (Attraction attraction : attractions) {
 
 			for (VisitedLocation visitedLocation : userLocations) {
 
 				if (nearAttraction(visitedLocation, attraction)) {
-					//future captures the result of asynchronous task
+					// future captures the result of asynchronous task
 					CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-						user.addUserReward(new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
+						user.addUserReward(
+								new UserReward(visitedLocation, attraction, getRewardPoints(attraction, user)));
 					}, executorService);
-					//The task execution will be handled by the executorService, which is an ExecutorService instance passed as an argument.
+					// The task execution will be handled by the executorService, which is an
+					// ExecutorService instance passed as an argument.
 					futures.add(future);
 					break;
 				}
 			}
 		}
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
-		
 
 	}
-	
+
 	/**
 	 * Calculate rewards for a list of user from attractions they have visited
 	 * 
@@ -114,8 +113,7 @@ public class RewardsService {
 	 * @return CompletableFuture<Void>
 	 */
 	public CompletableFuture<Void> calculateAllRewards(List<User> users) {
-		List<CompletableFuture<Void>> completableFutures = users.stream()
-				.map(user -> this.calculateRewards(user))
+		List<CompletableFuture<Void>> completableFutures = users.stream().map(user -> this.calculateRewards(user))
 				.collect(Collectors.toList());
 
 		return CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[completableFutures.size()]));

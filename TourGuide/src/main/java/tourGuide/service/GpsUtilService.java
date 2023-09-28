@@ -11,7 +11,6 @@ import gpsUtil.GpsUtil;
 import gpsUtil.location.Attraction;
 import gpsUtil.location.VisitedLocation;
 
-
 @Service
 public class GpsUtilService {
 
@@ -23,17 +22,28 @@ public class GpsUtilService {
 
 	private final ExecutorService executorService = Executors.newFixedThreadPool(1200);
 
+	/**
+	 * Get all attractions from GpsUtil
+	 * 
+	 * @return List of Attractions
+	 */
 	public List<Attraction> getListOfAttractions() {
 		return gpsUtil.getAttractions();
 	}
 
-    public VisitedLocation getUserLocation(UUID userId){
-        try{
-            return gpsUtil.getUserLocation(userId);
-        }catch(NumberFormatException numberFormatException){
-            numberFormatException.printStackTrace();
-        }
-        return null;
-    }
+	/**
+	 * Get location of an user by his id
+	 * 
+	 * @param userId - UUID
+	 * @return location of an user - VisitedLocation
+	 */
+	public VisitedLocation getUserLocation(UUID userId) {
+		try {
+			return gpsUtil.getUserLocation(userId);
+		} catch (NumberFormatException numberFormatException) {
+			numberFormatException.printStackTrace();
+		}
+		return null;
+	}
 
 }

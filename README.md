@@ -38,7 +38,7 @@ Available for all platforms (PC, tablets, phones)
 
 ## API documentation with Swagger:
 
--While application in running on server, go to : "http://localhost:8080/swagger-ui.html" in order to see and test endpoints easily.
+-While application in running on server, go to : "http://localhost:8080/swagger-ui.html" in order to see and test endpoints easily (you can use "internalUser0" as parameter for necessary endpoints).
 
 -------------------------------------------------------------------------------------------------------------------------------------
 
